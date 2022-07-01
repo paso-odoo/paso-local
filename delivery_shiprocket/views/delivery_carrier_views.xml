@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <record id="view_delivery_carrier_form_inherit_delivery_shiprocket" model="ir.ui.view">
+    <field name="name">delivery.carrier.form.inherit.delivery.shiprocket</field>
+    <field name="model">delivery.carrier</field>
+    <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+    <field name="arch" type="xml">
+      <page name="destination" position="before">
+        <page string="Shiprocket Configuration" name="shiprocket_configuration" attrs="{'invisible': [('delivery_type', '!=', 'shiprocket')]}">
+          <group>
+            <group>
+              <field name="shiprocket_api_url" attrs="{'required': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <field name="shiprocket_email" attrs="{'required': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <field name="shiprocket_password" password="1" attrs="{'required': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <div colspan='2'>
+                <button name="action_generate_access_token" string=" Generate Access Token" type="object" class="oe_inline fa fa-arrow-right oe_link"/>
+              </div>
+              <field name="shiprocket_payment_method" attrs="{'invisible': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <field name="shiprocket_label_generate" attrs="{'invisible': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <field name="shiprocket_invoice_generate" attrs="{'invisible': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+              <field name="shiprocket_manifests_generate" attrs="{'invisible': [('shiprocket_access_token', '=', False), ('delivery_type', '=', 'shiprocket')]}"/>
+
+
+
+<!--              <div colspan='2'>-->
+<!--                <button name="action_get_carrier_type" string="Load your Easypost carrier accounts" type="object" class="oe_inline fa fa-arrow-right oe_link"/>-->
+<!--              </div>-->
+<!--              <div colspan="2" class="alert alert-warning" attrs="{'invisible': ['|', ('easypost_delivery_type', '!=', False), ('delivery_type', '!=', 'easypost')]}" role="status">-->
+<!--                <p>Do not forget to load your Easypost carrier accounts for a valid configuration.</p>-->
+<!--              </div>-->
+<!--              <field name="easypost_delivery_type" string="Carrier Type" readonly="1" attrs="{'invisible': [('easypost_delivery_type', '=', False)]}"/>-->
+
+<!--              <field-->
+<!--                name="easypost_default_package_type_id" string="Default Package Type"-->
+<!--                context="{'default_easypost_carrier': easypost_delivery_type, 'default_package_carrier_type': delivery_type}"-->
+<!--                attrs="{'invisible': [('easypost_delivery_type', '=', False)], 'required': [('easypost_delivery_type', '!=', False)]}"/>-->
+<!--              <field name="easypost_default_service_id" context="{'default_easypost_carrier': easypost_delivery_type}" attrs="{'invisible': [('easypost_delivery_type', '=', False)]}"/>-->
+            </group>
+            <group>
+              <field name="shiprocket_access_token" string="Access Token" invisible="1"/>
+              <field name="shiprocket_token_create_date" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
+              <field name="shiprocket_token_expiry_date" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
+              <field name="shiprocket_default_package_type_id" domain="[('package_carrier_type', '=', 'shiprocket')]"/>
+              <div colspan='2'>
+                <button name="action_get_channels" string=" Select Channel" type="object" class="oe_inline fa fa-arrow-right oe_link"/>
+              </div>
+              <field name="shiprocket_channel" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
+              <field name="shiprocket_channel_code" invisible="0" readonly="1"/>
+            </group>
+<!--            <group>-->
+<!--              <field name="easypost_label_file_type" string="Label Format" attrs="{'required': [('delivery_type', '=', 'easypost')]}"/>-->
+<!--            </group>-->
+<!--            <group string="Options">-->
+<!--              <field name="can_generate_return" invisible="1"/>-->
+<!--              <field name="return_label_on_delivery" attrs="{'invisible': [('can_generate_return', '=', False)]}"/>-->
+<!--              <field name="get_return_label_from_portal" attrs="{'invisible': [('return_label_on_delivery', '=', False)]}"/>-->
+<!--            </group>-->
+          </group>
+<!--          <group string="Easypost Tutorial" attrs="{'invisible': [('delivery_type', '!=', 'easypost')]}">-->
+<!--            <ul>-->
+<!--              <li>-->
+<!--                <b>Go to-->
+<!--                  <a href="https://www.easypost.com/signup" target="_blank">Easypost Website</a>-->
+<!--                  to create a new account:</b>-->
+<!--                <br/>-->
+<!--                <img src="/delivery_easypost/static/src/img/signup.png" alt="Sign up" title="Sign up"/>-->
+<!--              </li>-->
+<!--              <li>-->
+<!--                <b>Once your account is created, go to your Dashboard and click on the arrow next to your username to configure your carrier accounts. </b>-->
+<!--                <b>You can add new carrier accounts on the right side of the same page.</b>-->
+<!--                <br/>-->
+<!--                <img src="/delivery_easypost/static/src/img/carrier_accounts.png" alt="Carrier accounts" title="Carrier accounts"/>-->
+<!--              </li>-->
+<!--              <li>-->
+<!--                <b>Copy your API keys in Odoo</b>-->
+<!--                <br/>-->
+<!--                <img src="/delivery_easypost/static/src/img/api_keys.png" alt="API keys" title="API keys"/>-->
+<!--              </li>-->
+<!--            </ul>-->
+<!--          </group>-->
+        </page>
+      </page>
+    </field>
+  </record>
+
+<!--  <record id="view_stock_package_type_form_inherit_easypost" model="ir.ui.view">-->
+<!--    <field name="name">stock.package.type.forms.inherit.easypost</field>-->
+<!--    <field name="model">stock.package.type</field>-->
+<!--    <field name="inherit_id" ref="stock.stock_package_type_form"/>-->
+<!--    <field name="arch" type="xml">-->
+<!--      <xpath expr="//field[@name='package_carrier_type']" position='after'>-->
+<!--        <field name="easypost_carrier" attrs="{'invisible': [('package_carrier_type', '!=', 'easypost')]}"/>-->
+<!--      </xpath>-->
+<!--      <xpath expr="//field[@name='length_uom_name']" position='replace'>-->
+<!--        <field name="length_uom_name" attrs="{'invisible': [('package_carrier_type', '=', 'easypost')]}"/>-->
+<!--        <span attrs="{'invisible': [('package_carrier_type', '!=', 'easypost')]}">Inches</span>-->
+<!--      </xpath>-->
+<!--    </field>-->
+<!--  </record>-->
+</odoo>
