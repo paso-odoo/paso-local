@@ -5,6 +5,9 @@
         <field name="model">stock.picking</field>
         <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_toggle_is_locked']" position="after">
+                <button name="action_pickup_requests" string="Pickup Requests" type="object" attrs="{'invisible': [('carrier_tracking_ref', '=', False)]}"/>
+            </xpath>
             <xpath expr="//group[@name='other_infos']" position="before">
                 <group string="Shiprocket Information">
 <!--                    <field name="carrier_id" invisible="1"/>-->

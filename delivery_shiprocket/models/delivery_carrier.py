@@ -148,6 +148,7 @@ class DeliverCarrier(models.Model):
             if shipping:
                 picking.shiprocket_order_id = shipping.get('order_id') if shipping.get('order_id') else False
                 picking.shiprocket_shipment_id = shipping.get('shipment_id') if shipping.get('shipment_id') else False
+                # need to change awb when available
                 picking.carrier_tracking_ref = shipping.get('shipment_id') if shipping.get('shipment_id') else False
                 picking.shiprocket_status = shipping.get('status') if shipping.get('status') else ''
                 # picking.shiprocket_invoice_url = shipping.get('invoice_url') if shipping.get('invoice_url') else ''
@@ -158,8 +159,8 @@ class DeliverCarrier(models.Model):
                     self.create_attachment_shiprocket(picking, shipping.get('invoice_url'), 'Invoice')
                 if shipping.get('label_url'):
                     self.create_attachment_shiprocket(picking, shipping.get('label_url'), 'Label')
-                if shipping.get('manifest_url'):
-                    self.create_attachment_shiprocket(picking, shipping.get('manifest_url'), 'Manifest')
+                # if shipping.get('manifest_url'):
+                #     self.create_attachment_shiprocket(picking, shipping.get('manifest_url'), 'Manifest')
                 # rate_request = self.shiprocket_rate_shipment(picking.sale_id)
                 # print("rate_request--------------------",rate_request)
                 # if rate_request and rate_request.get('courier_name'):
@@ -193,7 +194,7 @@ class DeliverCarrier(models.Model):
         tracking link by package.
         """
         print("shiprocket_get_tracking_link---------------------",picking)
-        sr = ShipRocket(self.sudo().shiprocket_access_token, self)
+        sr = ShipRocket(self.shiprocket_access_token, self)
         shipment_id = picking.shiprocket_shipment_id
         track_url = sr.track_shipment(shipment_id)
         print("track_url--------------------",track_url)
@@ -205,12 +206,13 @@ class DeliverCarrier(models.Model):
         sr = ShipRocket(self.sudo().shiprocket_access_token, self)
         cancel_shipment = sr.send_cancelling(picking)
         print("cancel_shipment----------------------",cancel_shipment)
-        if cancel_shipment and cancel_shipment.get('status_code') == 200:
+        if cancel_shipment and cancel_shipment.get('status') == 200:
             picking.write({
                 'carrier_tracking_ref': '',
                 'carrier_price': 0.0,
-                'shiprocket_status': 'CANCELLED'
+                'shiprocket_status': 'REQUEST FOR CANCEL'
             })
+            raise UserError(_(cancel_shipment.get('message')))
         else:
             raise UserError(_('Cannot cancel a Shipment!'))
 

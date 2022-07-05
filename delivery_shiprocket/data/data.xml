@@ -17,6 +17,5 @@
             <field name="delivery_type">shiprocket</field>
             <field name="shiprocket_api_url">https://apiv2.shiprocket.in/v1/</field>
         </record>
-
     </data>
 </odoo>

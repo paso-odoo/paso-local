@@ -3,7 +3,7 @@
 
 from odoo.http import request
 from odoo.exceptions import UserError,AccessError
-import json, googlemaps, requests
+import requests
 from werkzeug.urls import url_join
 import re
 import string
@@ -39,9 +39,10 @@ class ShipRocket():
             else:
                 response = requests.post(access_url, headers=self.header, json=data)
             response_json = response.json()
+            print("response_json-------------------------",response_json)
             # check for any error in response
             if 'error' in response_json:
-                error_message = response_json['error'].get('message')
+                error_message = response_json.get('error').get('message')
                 error_detail = response_json['error'].get('errors')
                 if error_detail:
                     error_message += ''.join(['\n - %s: %s' % (err.get('field', _('Unspecified field')), err.get('message', _('Unknown error'))) for err in error_detail])
@@ -263,6 +264,26 @@ class ShipRocket():
         return result
 
 
+    def request_pickup(self, picking, carrier):
+        print("--------------------",picking,carrier)
+        if picking and picking.shiprocket_shipment_id:
+            pickup_data = {
+                "shipment_id": [picking.shiprocket_shipment_id],
+            }
+        # pickup requests
+        pickup_requests = self._make_api_request('external/courier/generate/pickup', 'post', pickup_data)
+        pickup_response = pickup_requests.json()
+        print("pickup_requests-------------------------", pickup_response,pickup_requests)
+        if pickup_requests.status_code in [200,400] and carrier.shiprocket_manifests_generate:
+            manifest_response = self._make_api_request('external/manifests/generate', 'post', pickup_data)
+            print("manifest_response-------------------",manifest_response)
+            manifest_result = manifest_response.json()
+            print("manifest_response------------------------", manifest_result)
+            if manifest_result and manifest_result.get('manifest_url'):
+                return manifest_result
+        else:
+            return pickup_response
+
 
     def send_shipping(self, picking, carrier, is_return=False):
         print("call shipping-000------------------",picking,carrier)
@@ -278,14 +299,8 @@ class ShipRocket():
              'exact_price': '',
              'courier_name': '',
         }
-
-        # delivery_packages = picking.carrier_id._get_packages_from_picking(picking, picking.carrier_id.shiprocket_default_package_type_id)
-        # print("delivery_packages=-------------------------------",delivery_packages)
-        #
         # 5/0
-
         param = self._get_shipping_params(picking, carrier)
-
         try:
             rate_request = self.rate_request(carrier, picking.partner_id, picking.picking_type_id.warehouse_id.partner_id, order=picking.sale_id, picking=picking, is_return=is_return)
             # check for error in result
@@ -296,7 +311,7 @@ class ShipRocket():
                 dict_response['courier_name'] = rate_request.get('courier_name')
             res = self._make_api_request('external/orders/create/adhoc', 'post', param[0])
             print("res------------------------", res, res.json())
-            5/0
+            # 5/0
             if res and res.status_code == 200:
                 result = res.json()
                 print("result-------------create--------",result)
@@ -318,18 +333,6 @@ class ShipRocket():
                     label_data = {
                         "shipment_id": [result.get('shipment_id')],
                     }
-                    if carrier.shiprocket_manifests_generate:
-                        manifest_response = self._make_api_request('external/manifests/generate', 'post', label_data)
-                        manifest_result = manifest_response.json()
-                        print("manifest_response------------------------",manifest_result)
-                        if manifest_result and manifest_result.get('manifest_url'):
-                            dict_response['manifest_url'] = manifest_result.get('manifest_url')
-                    if carrier.shiprocket_label_generate:
-                        label_response = self._make_api_request('external/courier/generate/label', 'post', label_data)
-                        print("label_response0000------------------------",label_response,label_response.json())
-                        label_result = label_response.json()
-                        if label_result and label_result.get('label_url'):
-                            dict_response['label_url'] = label_result.get('label_url')
                     if carrier.shiprocket_invoice_generate:
                         invoice_data = {
                             "ids": [result.get('order_id')]
@@ -338,6 +341,12 @@ class ShipRocket():
                         invoice_result = invoice_response.json()
                         if invoice_result and invoice_result.get('invoice_url'):
                             dict_response['invoice_url'] = invoice_result.get('invoice_url')
+                    if carrier.shiprocket_label_generate:
+                        label_response = self._make_api_request('external/courier/generate/label', 'post', label_data)
+                        print("label_response0000------------------------",label_response,label_response.json())
+                        label_result = label_response.json()
+                        if label_result and label_result.get('label_url'):
+                            dict_response['label_url'] = label_result.get('label_url')
                     print("dict-------------response---------------------",dict_response)
         except Exception as e:
             dict_response['error_found'] = e.message
