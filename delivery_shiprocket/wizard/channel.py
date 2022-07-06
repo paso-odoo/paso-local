@@ -5,7 +5,7 @@ from odoo import fields, models, api
 
 class ChannelType(models.TransientModel):
     _name = "delivery.channel.shiprocket"
-    _description = "Carrier Type"
+    _description = "Channel from Shiprocket"
 
     channel_type = fields.Selection(selection="_get_channel_types", string="Channel")
     channel_code = fields.Selection(selection="_get_channel_codes", string="Channel Code", store=True)

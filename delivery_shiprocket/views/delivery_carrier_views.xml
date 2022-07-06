@@ -38,14 +38,20 @@
             </group>
             <group>
               <field name="shiprocket_access_token" string="Access Token" invisible="1"/>
-              <field name="shiprocket_token_create_date" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
-              <field name="shiprocket_token_expiry_date" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
+              <field name="shiprocket_token_create_date" invisible="1"/>
+              <field name="shiprocket_token_expiry_date" invisible="1"/>
               <field name="shiprocket_default_package_type_id" domain="[('package_carrier_type', '=', 'shiprocket')]"/>
               <div colspan='2'>
                 <button name="action_get_channels" string=" Select Channel" type="object" class="oe_inline fa fa-arrow-right oe_link"/>
               </div>
               <field name="shiprocket_channel" readonly="1" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
               <field name="shiprocket_channel_code" invisible="0" readonly="1"/>
+              <field name="shiprocket_courier_filter" attrs="{'invisible': [('shiprocket_access_token', '=', False)]}"/>
+              <div colspan='2'>
+                <button name="action_get_couriers" string=" Select Carrier" type="object" class="oe_inline fa fa-arrow-right oe_link" attrs="{'invisible': [('shiprocket_courier_filter', '!=', 'default_courier')]}"/>
+              </div>
+              <field name="shiprocket_courier_name" attrs="{'invisible': [('shiprocket_courier_filter', '!=', 'default_courier')]}"/>
+              <field name="shiprocket_courier_id" invisible="0"/>
             </group>
 <!--            <group>-->
 <!--              <field name="easypost_label_file_type" string="Label Format" attrs="{'required': [('delivery_type', '=', 'easypost')]}"/>-->
@@ -82,19 +88,4 @@
       </page>
     </field>
   </record>
-
-<!--  <record id="view_stock_package_type_form_inherit_easypost" model="ir.ui.view">-->
-<!--    <field name="name">stock.package.type.forms.inherit.easypost</field>-->
-<!--    <field name="model">stock.package.type</field>-->
-<!--    <field name="inherit_id" ref="stock.stock_package_type_form"/>-->
-<!--    <field name="arch" type="xml">-->
-<!--      <xpath expr="//field[@name='package_carrier_type']" position='after'>-->
-<!--        <field name="easypost_carrier" attrs="{'invisible': [('package_carrier_type', '!=', 'easypost')]}"/>-->
-<!--      </xpath>-->
-<!--      <xpath expr="//field[@name='length_uom_name']" position='replace'>-->
-<!--        <field name="length_uom_name" attrs="{'invisible': [('package_carrier_type', '=', 'easypost')]}"/>-->
-<!--        <span attrs="{'invisible': [('package_carrier_type', '!=', 'easypost')]}">Inches</span>-->
-<!--      </xpath>-->
-<!--    </field>-->
-<!--  </record>-->
 </odoo>

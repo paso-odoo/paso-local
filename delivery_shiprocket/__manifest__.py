@@ -16,6 +16,7 @@
         'views/stock_picking.xml',
         # 'views/res_config_settings_views.xml',
         'wizard/channel_views.xml',
+        'wizard/carrier_views.xml',
 
     ],
     'license': 'OEEL-1',

@@ -22,10 +22,14 @@ class DeliverCarrier(models.Model):
     shiprocket_channel = fields.Char(string="Shiprocket Channel")
     shiprocket_channel_code = fields.Char(string="Shiprocket Channel Code")
     shiprocket_default_package_type_id = fields.Many2one("stock.package.type", string="Shiprocket Package Type")
-    shiprocket_payment_method = fields.Selection([('0', 'Prepaid'), ('1', 'COD')], default="0", string='Shiprocket Payment Method')
-    shiprocket_label_generate = fields.Boolean('Generate Label')
-    shiprocket_invoice_generate = fields.Boolean('Generate Invoice')
-    shiprocket_manifests_generate = fields.Boolean('Generate Manifest')
+    shiprocket_payment_method = fields.Selection([('0', 'Prepaid'), ('1', 'COD')], default="0", string="Shiprocket Payment Method")
+    shiprocket_label_generate = fields.Boolean("Generate Label")
+    shiprocket_invoice_generate = fields.Boolean("Generate Invoice")
+    shiprocket_manifests_generate = fields.Boolean("Generate Manifest")
+
+    shiprocket_courier_filter = fields.Selection([('default_courier', 'Default Carrier'), ('lowest_rate', 'Lowest Rate'), ('call_before_delivery', 'Call Before Delivery'), ('lowest_etd', 'Lowest Estimated Time'), ('high_ratings', 'Highest Ratings')], default='lowest_rate', string='Shipment Based on')
+    shiprocket_courier_name = fields.Char(string="Default Carrier")
+    shiprocket_courier_id = fields.Char(string="Default Carrier Code")
 
 
     def _compute_can_generate_return(self):
@@ -90,8 +94,8 @@ class DeliverCarrier(models.Model):
 
 
     def action_get_channels(self):
-        """ Return the list of carriers configured by the customer
-        on its easypost account.
+        """ Return the list of channels configured by the customer
+        on its shiprocke account.
         """
         if self.delivery_type == 'shiprocket' and self.sudo().shiprocket_access_token:
             sr = ShipRocket(self.shiprocket_access_token, self)
@@ -107,6 +111,24 @@ class DeliverCarrier(models.Model):
         else:
             raise UserError('A Access Token is required in order to load your Shiprocket Channels.')
 
+
+    def action_get_couriers(self):
+        """ Return the list of carriers configured by the customer
+        on its shiprocket account.
+        """
+        if self.delivery_type == 'shiprocket' and self.sudo().shiprocket_access_token:
+            sr = ShipRocket(self.shiprocket_access_token, self)
+            carriers = sr.fetch_shiprocket_carriers()
+            print("carriers------------------", carriers)
+            if carriers:
+                action = self.env["ir.actions.actions"]._for_xml_id("delivery_shiprocket.act_delivery_shiprocket_carriers")
+                action['context'] = {
+                    'carrier_names': carriers,
+                    'default_delivery_carrier_id': self.id,
+                }
+                return action
+        else:
+            raise UserError('A Access Token is required in order to load your Shiprocket Channels.')
 
 
     # def _shiprocket_convert_weight(self, weight):

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_delivery_shiprocket_channel_type" model="ir.ui.view">
-        <field name="name">Shiprocket Select Channel</field>
-        <field name="model">delivery.channel.shiprocket</field>
+    <record id="view_delivery_shiprocket_carriers" model="ir.ui.view">
+        <field name="name">Shiprocket Select Carrier</field>
+        <field name="model">delivery.carrier.shiprocket</field>
         <field name="arch" type="xml">
-            <form string="Select Channel">
+            <form string="Select Carrier">
                 <group>
-                    <field name="channel_type"/>
-                    <field name="channel_code" invisible="1"/>
+                    <field name="carrier_name"/>
+                    <field name="carrier_code" invisible="0"/>
                     <field name="delivery_carrier_id" invisible="1"/>
                 </group>
                 <footer>
@@ -18,10 +18,10 @@
         </field>
     </record>
 
-    <record id="act_delivery_shiprocket_channels" model="ir.actions.act_window">
-        <field name="name">Select a Channel</field>
+    <record id="act_delivery_shiprocket_carriers" model="ir.actions.act_window">
+        <field name="name">Select a Carrier</field>
         <field name="type">ir.actions.act_window</field>
-        <field name="res_model">delivery.channel.shiprocket</field>
+        <field name="res_model">delivery.carrier.shiprocket</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
