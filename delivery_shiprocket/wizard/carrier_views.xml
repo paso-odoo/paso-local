@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="view_delivery_shiprocket_carriers" model="ir.ui.view">
-        <field name="name">Shiprocket Select Carrier</field>
+        <field name="name">Shiprocket Select Courier</field>
         <field name="model">delivery.carrier.shiprocket</field>
         <field name="arch" type="xml">
-            <form string="Select Carrier">
+            <form string="Select Courier Service">
                 <group>
-                    <field name="carrier_name"/>
-                    <field name="carrier_code" invisible="0"/>
+                    <field name="courier_id" options="{'no_quick_create': True, 'no_create_edit': True, 'no_open': True}"/>
                     <field name="delivery_carrier_id" invisible="1"/>
+
+            <!--   to be removed   -->
+<!--                    <field name="carrier_name"/>-->
+<!--                    <field name="carrier_code" invisible="0"/>-->
                 </group>
                 <footer>
                     <button name="action_validate" type="object" string="Select" class="btn-primary" data-hotkey="q"/>
@@ -19,7 +22,7 @@
     </record>
 
     <record id="act_delivery_shiprocket_carriers" model="ir.actions.act_window">
-        <field name="name">Select a Carrier</field>
+        <field name="name">Courier Service</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">delivery.carrier.shiprocket</field>
         <field name="view_mode">form</field>

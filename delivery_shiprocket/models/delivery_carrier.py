@@ -27,10 +27,27 @@ class DeliverCarrier(models.Model):
     shiprocket_invoice_generate = fields.Boolean("Generate Invoice")
     shiprocket_manifests_generate = fields.Boolean("Generate Manifest")
 
-    shiprocket_courier_filter = fields.Selection([('default_courier', 'Default Carrier'), ('lowest_rate', 'Lowest Rate'), ('call_before_delivery', 'Call Before Delivery'), ('lowest_etd', 'Lowest Estimated Time'), ('high_ratings', 'Highest Ratings')], default='lowest_rate', string='Shipment Based on')
-    shiprocket_courier_name = fields.Char(string="Default Carrier")
-    shiprocket_courier_id = fields.Char(string="Default Carrier Code")
+    shiprocket_courier_filter = fields.Selection([('default_courier', 'Default Shiprocket Service'), ('lowest_rate', 'Lowest Rate'), ('lowest_etd', 'Lowest Estimated Time'), ('high_ratings', 'Highest Ratings'), ('call_before_delivery', 'Call Before Delivery')], default='lowest_rate', string='Shipment Based on')
 
+    shiprocket_courier_id = fields.Many2one('shiprocket.carrier.service', string="Shiprocket Service")
+
+    #to be removed
+    # shiprocket_courier_name = fields.Char(string="Default Carrier")
+    # shiprocket_courier_code = fields.Char(string="Default Carrier Code")
+
+
+    @api.onchange('shiprocket_courier_filter')
+    def onchange_shiprocket_courier_filter(self):
+        if self.shiprocket_courier_filter == 'lowest_rate':
+            self.name = 'Shiprocket - Lowest Rate'
+        elif self.shiprocket_courier_filter == 'call_before_delivery':
+            self.name = 'Shiprocket - Call Before Delivery'
+        elif self.shiprocket_courier_filter == 'lowest_etd':
+            self.name = 'Shiprocket - Lowest Estimated Delivery time'
+        elif self.shiprocket_courier_filter == 'high_ratings':
+            self.name = 'Shiprocket - Highest Ratings'
+        elif self.shiprocket_courier_filter == 'default_courier' and self.shiprocket_courier_id:
+            self.name = 'Shiprocket - %s' % (self.shiprocket_courier_id.name)
 
     def _compute_can_generate_return(self):
         super(DeliverCarrier, self)._compute_can_generate_return()
@@ -42,7 +59,7 @@ class DeliverCarrier(models.Model):
             shiprocket username and password.
         """
         if self.delivery_type == 'shiprocket' and self.shiprocket_email and self.shiprocket_password and self.shiprocket_api_url:
-            sr = ShipRocket(self.sudo().shiprocket_access_token, self)
+            sr = ShipRocket(self.shiprocket_access_token, self)
             response = sr.authorize_generate_token()
             if response.status_code == 200:
                 response = response.json()
@@ -74,7 +91,6 @@ class DeliverCarrier(models.Model):
             if response.status_code == 200:
                 response = response.json()
                 carrier.shiprocket_access_token = response.get('token')
-                print("datetime.fromisoformat(response.get('created_at'))-----------",datetime.fromisoformat(response.get('created_at')))
                 carrier.shiprocket_token_create_date = datetime.fromisoformat(response.get('created_at'))
                 carrier.shiprocket_token_expiry_date = datetime.fromisoformat(response.get('created_at')) + timedelta(days=10)
                 type = 'success'
@@ -94,8 +110,9 @@ class DeliverCarrier(models.Model):
 
 
     def action_get_channels(self):
-        """ Return the list of channels configured by the customer
-        on its shiprocke account.
+        """
+        Return the list of channels configured by the customer
+        on its shiprocket account.
         """
         if self.delivery_type == 'shiprocket' and self.sudo().shiprocket_access_token:
             sr = ShipRocket(self.shiprocket_access_token, self)
@@ -113,20 +130,17 @@ class DeliverCarrier(models.Model):
 
 
     def action_get_couriers(self):
-        """ Return the list of carriers configured by the customer
-        on its shiprocket account.
+        """
+        Returns the action for wizard to select shiprocket courier service - create a new shiprocket services if not available in db.
         """
         if self.delivery_type == 'shiprocket' and self.sudo().shiprocket_access_token:
             sr = ShipRocket(self.shiprocket_access_token, self)
-            carriers = sr.fetch_shiprocket_carriers()
-            print("carriers------------------", carriers)
-            if carriers:
-                action = self.env["ir.actions.actions"]._for_xml_id("delivery_shiprocket.act_delivery_shiprocket_carriers")
-                action['context'] = {
-                    'carrier_names': carriers,
-                    'default_delivery_carrier_id': self.id,
-                }
-                return action
+            sr.fetch_shiprocket_carriers()
+            action = self.env["ir.actions.actions"]._for_xml_id("delivery_shiprocket.act_delivery_shiprocket_carriers")
+            action['context'] = {
+                'default_delivery_carrier_id': self.id,
+            }
+            return action
         else:
             raise UserError('A Access Token is required in order to load your Shiprocket Channels.')
 
@@ -137,11 +151,9 @@ class DeliverCarrier(models.Model):
     #     return weight_uom_id._compute_quantity(weight, self.env.ref('uom.product_uom_kgm'), round=False)
 
 
-
     def shiprocket_rate_shipment(self, order):
         """ Return the rates for a quotation/SO."""
         sr = ShipRocket(self.shiprocket_access_token, self)
-        print("order------------------------",order)
         result = sr.rate_request(self, order.partner_shipping_id, order.warehouse_id.partner_id, order)
         if result['error_found']:
             return {'success': False,
@@ -173,19 +185,11 @@ class DeliverCarrier(models.Model):
                 # need to change awb when available
                 picking.carrier_tracking_ref = shipping.get('shipment_id') if shipping.get('shipment_id') else False
                 picking.shiprocket_status = shipping.get('status') if shipping.get('status') else ''
-                # picking.shiprocket_invoice_url = shipping.get('invoice_url') if shipping.get('invoice_url') else ''
-                # picking.shiprocket_label_url = shipping.get('label_url') if shipping.get('label_url') else ''
-                # picking.shiprocket_manifest_url = shipping.get('manifest_url') if shipping.get('manifest_url') else ''
                 picking.message_post(body='Shiprocket order generated!') if shipping.get('order_id') else False
                 if shipping.get('invoice_url'):
                     self.create_attachment_shiprocket(picking, shipping.get('invoice_url'), 'Invoice')
                 if shipping.get('label_url'):
                     self.create_attachment_shiprocket(picking, shipping.get('label_url'), 'Label')
-                # if shipping.get('manifest_url'):
-                #     self.create_attachment_shiprocket(picking, shipping.get('manifest_url'), 'Manifest')
-                # rate_request = self.shiprocket_rate_shipment(picking.sale_id)
-                # print("rate_request--------------------",rate_request)
-                # if rate_request and rate_request.get('courier_name'):
                 picking.shipment_courier = shipping.get('courier_name')
                 # shipping.update({'exact_price': shipping.get('price')})
                 res.append(shipping)

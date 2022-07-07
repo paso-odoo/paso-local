@@ -27,7 +27,9 @@ class ShipRocket():
             }
 
     def _make_api_request(self, endpoint, request_type='get', data=None):
-        """make an api call, return response"""
+        """
+        make an api call, return response for multiple api requests of shiprocket
+        """
         access_url = url_join(self.url, endpoint)
         if endpoint == 'external/auth/login':
             self.header = {
@@ -52,8 +54,8 @@ class ShipRocket():
             raise e
 
     def authorize_generate_token(self):
-        """ Generate access token from shiprocket
-            credentials.
+        """
+        Generate access token from shiprocket credentials.
         """
         data = {
             'email': self.carrier.sudo().shiprocket_email if self.carrier.sudo().shiprocket_email else '',
@@ -80,12 +82,19 @@ class ShipRocket():
         """
         carriers = self._make_api_request('external/courier/courierListWithCounts')
         carriers = carriers.json()
-        carriers = {c['name']: c['id'] for c in carriers.get('courier_data')}
-        print("carriers-------------------------",carriers)
-        if carriers:
-            return carriers
-        else:
-            raise UserError(_("Carriers are not available!"))
+        print("carriers----------------------------",carriers)
+        for carrier_data in carriers.get('courier_data'):
+            carrier = request.env['shiprocket.carrier.service'].search([('name', '=', carrier_data.get('name'))])
+            if not carrier:
+                request.env['shiprocket.carrier.service'].create({'name': carrier_data.get('name'), 'carrier_code': carrier_data.get('id')})
+
+        # to be removed
+        # carriers = {c['name']: {'id': c['id'], 'call_before_delivery': c['call_before_delivery']} for c in carriers.get('courier_data')}
+        # print("carriers-------------------------",carriers)
+        # if carriers:
+        #     return carriers
+        # else:
+        #     raise UserError(_("Carriers are not available!"))
 
     def _check_required_value(self, carrier, recipient, shipper, order=False, picking=False):
         """ Check if the required value are present in order
@@ -115,7 +124,6 @@ class ShipRocket():
                 return _("The estimated shipping price cannot be computed because the weight is missing for the following product(s): \n %s") % ", ".join(
                     error_lines.product_id.mapped('name'))
         return True
-
 
     def rate_request(self, carrier, recipient, shipper, order=False, picking=False, is_return=False):
         """
@@ -147,59 +155,43 @@ class ShipRocket():
             if rate_request.status_code == 200:
                 rate_request = rate_request.json()
                 if rate_request.get('data'):
-                    rate = rate_request.get('data').get('available_courier_companies')
+                    available_couriers = rate_request.get('data').get('available_courier_companies')
+                    print("available_couriers--------------------------------------",available_couriers)
                     if is_india:
-                        rate_dict = {c.get('courier_name'): c.get('rate') for c in rate}
+                        rate_dict = {c.get('courier_name'): {'rate': c.get('rate'), 'call_before_delivery': c.get('call_before_delivery'), 'etd_hrs': c.get('etd_hours'), 'rating': c.get('rating')} for c in available_couriers}
                     else:
-                        rate_dict = {c.get('courier_name'): c.get('rate').get('rate') for c in rate}
+                        rate_dict = {c.get('courier_name'): {'rate': c.get('rate').get('rate'), 'call_before_delivery': c.get('call_before_delivery'), 'etd_hrs': c.get('etd_hours'), 'rating': c.get('rating')} for c in available_couriers}
                     print("rate dict=---------------------------",rate_dict)
-                    courier_name_data = False
-                    rate_list = rate_dict.values()
-                    # if is_india:
-                    #     courier_list = [{data.get('rate'): data.get('courier_name')} for data in rate]
-                    #     rate_list = [data.get('rate') for data in rate]
-                    # if not is_india:
-                    #     courier_list = [{data.get('rate').get('rate'): data.get('courier_name')} for data in
-                    #                     rate]
-                    #     rate_list = [data.get('rate').get('rate') for data in rate]
-                    print("carrier.shiprocket_courier_filter-----------------",carrier.shiprocket_courier_filter, carrier.shiprocket_courier_name, carrier.shiprocket_courier_id)
-                    if carrier.shiprocket_courier_filter == 'default_courier' and carrier.shiprocket_courier_id and carrier.shiprocket_courier_name:
-                        courier_name = carrier.shiprocket_courier_name if carrier.shiprocket_courier_name else False
-                        if rate_dict and rate_dict.get(courier_name):
-                            rate_list = [rate_dict.get(courier_name)]
-                        else:
-                            dict_response['error_found'] = (_('Shiprocket Default Carrier - %s is not available.' % (carrier.shiprocket_courier_name)))
-                    elif carrier.shiprocket_courier_filter == 'call_before_delivery':
-
-                        print("call_before_delivery-------------------------",rate_list)
+                    rate_list = [dict_line.get('rate') for dict_line in rate_dict.values()]
+                    etd_list = [dict_line.get('etd_hrs') for dict_line in rate_dict.values()]
+                    rating_list = [dict_line.get('rating') for dict_line in rate_dict.values()]
+                    call_before_list = [dict_line.get('call_before_delivery') for dict_line in rate_dict.values()]
+                    print("rate_list---------------------------",rate_list)
+                    if carrier.shiprocket_courier_filter == 'default_courier' and carrier.shiprocket_courier_id:
+                        courier_name = carrier.shiprocket_courier_id.name if carrier.shiprocket_courier_id.name else False
+                    elif carrier.shiprocket_courier_filter == 'call_before_delivery' and 'Available' in call_before_list:
+                        courier_name = list(rate_dict.keys())[list(call_before_list).index('Available')] if rate_dict and list(rate_dict.keys())[list(call_before_list).index('Available')] else ''
+                    elif carrier.shiprocket_courier_filter == 'lowest_etd':
+                        print("inside lowest etfd--------------------------------",rate_dict)
+                        courier_name = list(rate_dict.keys())[list(etd_list).index(min(etd_list))] if rate_dict and list(rate_dict.keys())[list(etd_list).index(min(etd_list))] else ''
+                    elif carrier.shiprocket_courier_filter == 'high_ratings':
+                        print("inside high ratings---------------------------",rating_list)
+                        courier_name = list(rate_dict.keys())[list(rating_list).index(max(rating_list))] if rate_dict and list(rate_dict.keys())[list(rating_list).index(max(rating_list))] else ''
                     else:
-                        # if carrier.shiprocket_courier_filter == 'lowest_rate':
-                        # for courier in courier_list:
-                        #     courier_name = courier.get(min(rate_list)) if courier and courier.get(min(rate_list)) else ''
-                        # for courier in rate_dict:
-                        # print("rate_dict.values()--------------------",rate_dict.values(),min(rate_dict.values()), rate_dict.get(min(rate_dict.values())))
                         courier_name = list(rate_dict.keys())[list(rate_list).index(min(rate_list))] if rate_dict and list(rate_dict.keys())[list(rate_list).index(min(rate_list))] else ''
-                        print("imported courier name---------------------------",courier_name)
                     print("courier_name---------------------------",courier_name)
+
+                    if rate_dict and rate_dict.get(courier_name):
+                        rate_list = [rate_dict.get(courier_name).get('rate')]
+                    else:
+                        dict_response['error_found'] = (_('Shiprocket Carrier - %s is not available.' % (courier_name)))
                     if courier_name:
-                        carrier.product_id.description_sale = 'Courier: ' + courier_name
+                        carrier.product_id.description_sale = 'Courier: ' + courier_name  #for sale.order.line - courier name
                         dict_response['courier_name'] = courier_name
-                        courier_name_data = courier_name
-                    print("courier_name--------------------sss-------",courier_name_data)
 
-                    carriers = self.fetch_shiprocket_carriers()
-                    print("carriers.get(courier_name_data)----------------",carriers.get(courier_name_data))
-                    if carriers.get(courier_name_data):
-                        dict_response['courier_code'] = carriers.get(courier_name_data)
-
-                        # courier_json = available_couriers.json()
-                        # for courier_data in courier_json.get('courier_data'):
-                        #     print("courier_data-------------------",courier_data.get('name'))
-                        #     if courier_data.get('name') == courier_name_data:
-                        #         courier_code = courier_data.get('id')
-                        #         dict_response['courier_code'] = courier_code
-                        #         print("courier_name==  inside-----------------", courier_name_data, courier_data.get('name'))
-                    # print("rate_list-----------------------",rate_list)
+                    carrier = request.env['shiprocket.carrier.service'].search([('name', '=', dict_response['courier_name'])],limit=1)
+                    if carrier and carrier.carrier_code and is_india:
+                        dict_response['courier_code'] = carrier.carrier_code
 
                     print("rate_list------------------------",rate_list)
                     if rate_list:
@@ -222,7 +214,6 @@ class ShipRocket():
         print("dict_response-----------------------",dict_response)
         return dict_response
 
-
     def _get_shipping_params(self, picking, carrier):
         """
         Returns Shipping data from delivery order for create an order and generate invoice.
@@ -235,21 +226,6 @@ class ShipRocket():
             chars = re.escape(string.punctuation)
             number = re.sub(r'['+chars+']', '', picking.sale_id.partner_invoice_id.mobile.replace(" ", ''))
             num = number[-10:]
-
-        # if picking and picking.move_ids_without_package:
-        #     package_lines = picking.move_ids_without_package.filtered(lambda sml: sml.product_packaging_id)
-        #     if package_lines:
-        #         for line in package_lines:
-        #             if line.product_packaging_id.package_type_id:
-        #                 length = line.product_packaging_id.package_type_id.packaging_length if line.product_packaging_id.package_type_id.packaging_length > 0.5 and line.product_packaging_id.package_type_id.packaging_length > length else length
-        #                 breadth = line.product_packaging_id.package_type_id.width if line.product_packaging_id.package_type_id.width > 0.5 and line.product_packaging_id.package_type_id.width > breadth else breadth
-        #                 height = line.product_packaging_id.package_type_id.height if line.product_packaging_id.package_type_id.height > 0.5 and line.product_packaging_id.package_type_id.height > height else height
-        #     else:
-        #         package_type_id = carrier.shiprocket_default_package_type_id
-        #         length = package_type_id.packaging_length if package_type_id.packaging_length > 0.5 else length
-        #         breadth = package_type_id.width if package_type_id.width > 0.5 else breadth
-        #         height = package_type_id.height if package_type_id.height > 0.5 else height
-
         delivery_packages = picking.carrier_id._get_packages_from_picking(picking, picking.carrier_id.shiprocket_default_package_type_id)
         result = []
         for pkg in delivery_packages:
@@ -275,7 +251,7 @@ class ShipRocket():
                   "shipping_address_2": picking.partner_id.street2,
                   "shipping_city": picking.partner_id.city,
                   "shipping_pincode": picking.partner_id.zip,
-                  "shipping_country":picking.partner_id.country_id.name,
+                  "shipping_country": picking.partner_id.country_id.name,
                   "shipping_state": picking.partner_id.state_id.name,
                   "shipping_email": picking.partner_id.email,
                   "shipping_phone": num,
@@ -303,32 +279,6 @@ class ShipRocket():
             result.append(res)
         return result
 
-
-    def request_pickup(self, picking, carrier):
-        """
-        Generate Manifests and Pickup request for package.
-        https://apiv2.shiprocket.in/v1/external/courier/generate/pickup
-        https://apiv2.shiprocket.in/v1/external/manifests/generate
-        """
-        if picking and picking.shiprocket_shipment_id:
-            pickup_data = {
-                "shipment_id": [picking.shiprocket_shipment_id],
-            }
-        # pickup requests
-        pickup_requests = self._make_api_request('external/courier/generate/pickup', 'post', pickup_data)
-        pickup_response = pickup_requests.json()
-        print("pickup_requests-------------------------", pickup_response,pickup_requests)
-        if pickup_requests.status_code in [200,400] and carrier.shiprocket_manifests_generate:
-            manifest_response = self._make_api_request('external/manifests/generate', 'post', pickup_data)
-            print("manifest_response-------------------",manifest_response)
-            manifest_result = manifest_response.json()
-            print("manifest_response------------------------", manifest_result)
-            if manifest_result and manifest_result.get('manifest_url'):
-                return manifest_result
-        else:
-            return pickup_response
-
-
     def send_shipping(self, picking, carrier, is_return=False):
         """
         Create a Shiprocket Order and generate AWB, Invoice, Label.
@@ -337,7 +287,7 @@ class ShipRocket():
         https://apiv2.shiprocket.in/v1/external/orders/print/invoice
         https://apiv2.shiprocket.in/v1/external/courier/generate/label
         """
-        dict_response = {'order_id': 0, 'shipment_id': 0, 'status': False, 'tracking_number': 0, 'track_url': '', 'label_url': '', 'invoice_url': '', 'manifest_url': '', 'exact_price': '', 'courier_name': ''}
+        dict_response = {'order_id': 0, 'shipment_id': 0, 'status': False, 'tracking_number': 0, 'track_url': '', 'label_url': '', 'invoice_url': '', 'exact_price': '', 'courier_name': ''}
         param = self._get_shipping_params(picking, carrier)
         try:
             rate_request = self.rate_request(carrier, picking.partner_id, picking.picking_type_id.warehouse_id.partner_id, order=picking.sale_id, picking=picking, is_return=is_return)
@@ -347,7 +297,7 @@ class ShipRocket():
             elif rate_request and rate_request.get('courier_name'):
                 dict_response['exact_price'] = rate_request.get('price')
                 dict_response['courier_name'] = rate_request.get('courier_name')
-                dict_response['courier_code'] = rate_request.get('courier_code')
+                dict_response['courier_code'] = rate_request.get('courier_code') if rate_request.get('courier_code') else False
             res = self._make_api_request('external/orders/create/adhoc', 'post', param[0])
             print("res------------------------", res, res.json())
             # 5/0
@@ -381,7 +331,29 @@ class ShipRocket():
             dict_response['error_found'] = e.message
         return dict_response
 
-
+    def request_pickup(self, picking, carrier):
+        """
+        Generate Manifests and Pickup request for package.
+        https://apiv2.shiprocket.in/v1/external/courier/generate/pickup
+        https://apiv2.shiprocket.in/v1/external/manifests/generate
+        """
+        if picking and picking.shiprocket_shipment_id:
+            pickup_data = {
+                "shipment_id": [picking.shiprocket_shipment_id],
+            }
+        # pickup requests
+        pickup_requests = self._make_api_request('external/courier/generate/pickup', 'post', pickup_data)
+        pickup_response = pickup_requests.json()
+        print("pickup_requests-------------------------", pickup_response,pickup_requests)
+        if pickup_requests.status_code in [200,400] and carrier.shiprocket_manifests_generate:
+            manifest_response = self._make_api_request('external/manifests/generate', 'post', pickup_data)
+            print("manifest_response-------------------",manifest_response)
+            manifest_result = manifest_response.json()
+            print("manifest_response------------------------", manifest_result)
+            if manifest_result and manifest_result.get('manifest_url'):
+                return manifest_result
+        else:
+            return pickup_response
 
     def track_shipment(self, shipment_id):
         tracking_response = self._make_api_request('external/courier/track/shipment/%s' % (shipment_id), 'get', {})
@@ -391,7 +363,6 @@ class ShipRocket():
             print("tracking_data-00-------------------------",tracking_data)
             if tracking_data and tracking_data.get('tracking_data').get('track_url'):
                 return tracking_data.get('tracking_data').get('track_url')
-
 
     def send_cancelling(self, picking):
         if picking.shiprocket_order_id:
@@ -458,4 +429,3 @@ class ShipRocket():
         # picking.env.cr.commit()
         # return dict_response
 
-    #
