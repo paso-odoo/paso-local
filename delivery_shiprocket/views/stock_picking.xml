@@ -10,7 +10,6 @@
             </xpath>
             <xpath expr="//group[@name='other_infos']" position="before">
                 <group string="Shiprocket Information">
-<!--                    <field name="carrier_id" invisible="1"/>-->
                     <field name="shiprocket_order_id" readonly="1"/>
                     <field name="shiprocket_shipment_id" readonly="1"/>
                     <field name="shiprocket_status" readonly="1"/>

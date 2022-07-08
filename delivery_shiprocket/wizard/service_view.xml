@@ -8,10 +8,6 @@
                 <group>
                     <field name="courier_id" options="{'no_quick_create': True, 'no_create_edit': True, 'no_open': True}"/>
                     <field name="delivery_carrier_id" invisible="1"/>
-
-            <!--   to be removed   -->
-<!--                    <field name="carrier_name"/>-->
-<!--                    <field name="carrier_code" invisible="0"/>-->
                 </group>
                 <footer>
                     <button name="action_validate" type="object" string="Select" class="btn-primary" data-hotkey="q"/>

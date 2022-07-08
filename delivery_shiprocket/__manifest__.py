@@ -14,10 +14,8 @@
         'data/ir_cron.xml',
         'views/delivery_carrier_views.xml',
         'views/stock_picking.xml',
-        # 'views/res_config_settings_views.xml',
-        'wizard/channel_views.xml',
-        'wizard/carrier_views.xml',
-
+        'wizard/channel_view.xml',
+        'wizard/service_view.xml',
     ],
     'license': 'OEEL-1',
 }

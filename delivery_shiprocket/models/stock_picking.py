@@ -13,9 +13,12 @@ class StockPicking(models.Model):
     shiprocket_shipment_id = fields.Char('Shiprocket Shipment')
     shiprocket_status = fields.Char('Shiprocket Status')
     shipment_courier = fields.Char('Shiprocket Courier')
+    # shipment_courier_id = fields.Many2one('shiprocket.carrier.service', string='Shiprocket Courier')
 
     def action_pickup_requests(self):
-        print("--------action_pickup_requests------------")
+        """
+        Method for pickup request in stock.picking - create manifest from shiprocket
+        """
         for rec in self:
             if rec.carrier_tracking_ref and rec.carrier_id and rec.carrier_id.delivery_type == 'shiprocket':
                 sr = ShipRocket(rec.carrier_id.shiprocket_access_token, rec.carrier_id)
@@ -24,4 +27,5 @@ class StockPicking(models.Model):
                 if pickup and pickup.get('status_code') != 200 and pickup.get('message'):
                     raise UserError(_(pickup.get('message')))
                 elif pickup and pickup.get('manifest_url'):
-                    rec.carrier_id.create_attachment_shiprocket(rec, pickup.get('manifest_url'), 'Manifest')
+                    attachment = rec.carrier_id.create_attachment_shiprocket(rec, pickup.get('manifest_url'), 'Manifest')
+                    rec.message_post(body=(_("Shiprocket manifest generated.")), attachment_ids=[attachment.id])

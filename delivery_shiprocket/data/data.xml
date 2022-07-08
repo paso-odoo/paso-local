@@ -25,7 +25,6 @@
             <field name="name">ShipRocket</field>
             <field name="product_id" ref="delivery_shiprocket.product_product_delivery_shiprocket"/>
             <field name="delivery_type">shiprocket</field>
-            <field name="shiprocket_api_url">https://apiv2.shiprocket.in/v1/</field>
             <field name="shiprocket_default_package_type_id" ref="delivery_shiprocket.shiprocket_packaging_box_1kg"/>
         </record>
     </data>

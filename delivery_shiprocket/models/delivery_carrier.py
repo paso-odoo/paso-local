@@ -1,43 +1,42 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-import requests
-import base64
 from odoo import api, fields, models, _
 from datetime import timedelta, datetime
 from odoo.exceptions import UserError
+import requests
+import base64
 from .shiprocket_request import ShipRocket
 
 class DeliverCarrier(models.Model):
     _inherit = 'delivery.carrier'
 
-    delivery_type = fields.Selection(selection_add=[
-        ('shiprocket', 'Shiprocket')
-    ], ondelete={'shiprocket': lambda recs: recs.write({'delivery_type': 'fixed', 'fixed_price': 0})})
-    shiprocket_email = fields.Char("Shiprocket Username", groups="base.group_system", help="Enter your Username from Shiprocket account.")
+    delivery_type = fields.Selection(selection_add=[('shiprocket', 'Shiprocket')], ondelete={'shiprocket': lambda recs: recs.write({'delivery_type': 'fixed', 'fixed_price': 0})})
+    shiprocket_email = fields.Char("Shiprocket Email", groups="base.group_system", help="Enter your Username from Shiprocket account.")
     shiprocket_password = fields.Char("Shiprocket Password", groups="base.group_system", help="Enter your Password from Shiprocket account.")
     shiprocket_access_token = fields.Text("Shiprocket Access Token", groups="base.group_system", help="Generate access token by Shiproket credentials")
-    shiprocket_api_url = fields.Char("URL", default="https://apiv2.shiprocket.in/v1/")
+    # shiprocket_api_url = fields.Char("URL", default="https://apiv2.shiprocket.in/v1/")
     shiprocket_token_create_date = fields.Datetime("Access Token Created On")
     shiprocket_token_expiry_date = fields.Datetime("Access Token Expires On")
     shiprocket_channel = fields.Char(string="Shiprocket Channel")
     shiprocket_channel_code = fields.Char(string="Shiprocket Channel Code")
-    shiprocket_default_package_type_id = fields.Many2one("stock.package.type", string="Shiprocket Package Type")
-    shiprocket_payment_method = fields.Selection([('0', 'Prepaid'), ('1', 'COD')], default="0", string="Shiprocket Payment Method")
+    shiprocket_default_package_type_id = fields.Many2one("stock.package.type", string="Package Type")
+    shiprocket_payment_method = fields.Selection([('0', 'Prepaid'), ('1', 'COD')], default="0", string="Payment Method")
     shiprocket_label_generate = fields.Boolean("Generate Label")
     shiprocket_invoice_generate = fields.Boolean("Generate Invoice")
     shiprocket_manifests_generate = fields.Boolean("Generate Manifest")
-
-    shiprocket_courier_filter = fields.Selection([('default_courier', 'Default Shiprocket Service'), ('lowest_rate', 'Lowest Rate'), ('lowest_etd', 'Lowest Estimated Time'), ('high_ratings', 'Highest Ratings'), ('call_before_delivery', 'Call Before Delivery')], default='lowest_rate', string='Shipment Based on')
-
+    shiprocket_courier_filter = fields.Selection([('default_courier', 'Default Shiprocket Service'), ('lowest_rate', 'Lowest Rate'), ('lowest_etd', 'Lowest Estimated Time'), ('high_ratings', 'Highest Ratings'), ('call_before_delivery', 'Call Before Delivery')], string='Shipment Based on')
     shiprocket_courier_id = fields.Many2one('shiprocket.carrier.service', string="Shiprocket Service")
 
-    #to be removed
+    # to be removed
     # shiprocket_courier_name = fields.Char(string="Default Carrier")
     # shiprocket_courier_code = fields.Char(string="Default Carrier Code")
 
 
     @api.onchange('shiprocket_courier_filter')
     def onchange_shiprocket_courier_filter(self):
+        """
+        Delivery carrier name based upon shiprocket_courier_filter.
+        """
         if self.shiprocket_courier_filter == 'lowest_rate':
             self.name = 'Shiprocket - Lowest Rate'
         elif self.shiprocket_courier_filter == 'call_before_delivery':
@@ -47,25 +46,26 @@ class DeliverCarrier(models.Model):
         elif self.shiprocket_courier_filter == 'high_ratings':
             self.name = 'Shiprocket - Highest Ratings'
         elif self.shiprocket_courier_filter == 'default_courier' and self.shiprocket_courier_id:
-            self.name = 'Shiprocket - %s' % (self.shiprocket_courier_id.name)
+            self.name = 'Shiprocket - {}' .format(self.shiprocket_courier_id.name)
 
     def _compute_can_generate_return(self):
         super(DeliverCarrier, self)._compute_can_generate_return()
         self.filtered(lambda c: c.delivery_type == 'shiprocket').write({'can_generate_return': True})
 
-
     def action_generate_access_token(self):
-        """ Return the generated access token from
-            shiprocket username and password.
         """
-        if self.delivery_type == 'shiprocket' and self.shiprocket_email and self.shiprocket_password and self.shiprocket_api_url:
+        Return the generated access token from
+        shiprocket email and password.
+        """
+        if self.delivery_type == 'shiprocket' and self.shiprocket_email and self.shiprocket_password:
             sr = ShipRocket(self.shiprocket_access_token, self)
             response = sr.authorize_generate_token()
             if response.status_code == 200:
                 response = response.json()
                 self.shiprocket_access_token = response.get('token')
                 # self.shiprocket_token_create_date = datetime.now()
-                self.shiprocket_token_create_date = datetime.fromisoformat(response.get('created_at'))
+                print("response.get('created_at')----------------------------",response)
+                self.shiprocket_token_create_date = datetime.now()
                 self.shiprocket_token_expiry_date = datetime.now() + timedelta(days=9)
                 type = 'success'
                 message = _("Access Token is generated successfully!")
@@ -82,31 +82,23 @@ class DeliverCarrier(models.Model):
                 }
             }
 
-
     def cron_shiprocket_access_token(self):
+        """
+        Scheduled action for renew token automatically.
+        """
         shiprocket_carriers = self.search([('delivery_type', '=', 'shiprocket')])
+        print("shiprocket_carriers---------------------",shiprocket_carriers)
         for carrier in shiprocket_carriers:
+            print("carrier-----------------",carrier)
             sr = ShipRocket(carrier.shiprocket_access_token, carrier)
             response = sr.authorize_generate_token()
             if response.status_code == 200:
                 response = response.json()
                 carrier.shiprocket_access_token = response.get('token')
-                carrier.shiprocket_token_create_date = datetime.fromisoformat(response.get('created_at'))
-                carrier.shiprocket_token_expiry_date = datetime.fromisoformat(response.get('created_at')) + timedelta(days=10)
-                type = 'success'
-                message = _("Access Token is generated successfully!")
-            else:
-                type = 'danger'
-                message = _("Please check shiprocket credentials!")
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'type': type,
-                    'message': message,
-                    'next': {'type': 'ir.actions.act_window_close'},
-                }
-            }
+                print("in cron--------------",response.get('created_at'))
+                carrier.shiprocket_token_create_date = datetime.now()
+                carrier.shiprocket_token_expiry_date = datetime.now() + timedelta(days=9)
+                print("carrier.shiprocket_token_expiry_date---------------------",carrier.shiprocket_token_expiry_date )
 
 
     def action_get_channels(self):
@@ -126,7 +118,7 @@ class DeliverCarrier(models.Model):
                 }
                 return action
         else:
-            raise UserError('A Access Token is required in order to load your Shiprocket Channels.')
+            raise UserError('An Access Token is required in order to load your Shiprocket Channels.')
 
 
     def action_get_couriers(self):
@@ -137,12 +129,10 @@ class DeliverCarrier(models.Model):
             sr = ShipRocket(self.shiprocket_access_token, self)
             sr.fetch_shiprocket_carriers()
             action = self.env["ir.actions.actions"]._for_xml_id("delivery_shiprocket.act_delivery_shiprocket_carriers")
-            action['context'] = {
-                'default_delivery_carrier_id': self.id,
-            }
+            action['context'] = {'default_delivery_carrier_id': self.id}
             return action
         else:
-            raise UserError('A Access Token is required in order to load your Shiprocket Channels.')
+            raise UserError('An Access Token is required in order to load your Shiprocket Couriers.')
 
 
     # def _shiprocket_convert_weight(self, weight):
@@ -169,7 +159,8 @@ class DeliverCarrier(models.Model):
 
 
     def shiprocket_send_shipping(self, pickings):
-        """ It creates a Shiprocket order.
+        """
+        It creates a Shiprocket order.
         Once the order is generated. It will post as message the tracking
         links and the shipping labels, manifests and invoices.
         """
@@ -186,10 +177,14 @@ class DeliverCarrier(models.Model):
                 picking.carrier_tracking_ref = shipping.get('shipment_id') if shipping.get('shipment_id') else False
                 picking.shiprocket_status = shipping.get('status') if shipping.get('status') else ''
                 picking.message_post(body='Shiprocket order generated!') if shipping.get('order_id') else False
+                attachment_list = []
                 if shipping.get('invoice_url'):
-                    self.create_attachment_shiprocket(picking, shipping.get('invoice_url'), 'Invoice')
+                    attachment = self.create_attachment_shiprocket(picking, shipping.get('invoice_url'), 'Invoice')
+                    attachment_list.append(attachment.id) if attachment else False
                 if shipping.get('label_url'):
-                    self.create_attachment_shiprocket(picking, shipping.get('label_url'), 'Label')
+                    attachment = self.create_attachment_shiprocket(picking, shipping.get('label_url'), 'Label')
+                    attachment_list.append(attachment.id) if attachment else False
+                picking.message_post(body=(_("Shiprocket Attachments")), attachment_ids=attachment_list)
                 picking.shipment_courier = shipping.get('courier_name')
                 # shipping.update({'exact_price': shipping.get('price')})
                 res.append(shipping)
@@ -198,25 +193,28 @@ class DeliverCarrier(models.Model):
 
 
     def create_attachment_shiprocket(self, picking, url, name):
-        """ Create attachments for Shiprocket Invoice, Label
+        """
+        Create attachments for Shiprocket Invoice, Label
         and Manifest.
         """
         response = requests.Session().get(url, timeout=30)
         if response.status_code == 200 and response.content:
-            attachment = self.env['ir.attachment'].search([('name', '=', '%s Shiprocket %s' % (name, picking.name))])
+            attachment = self.env['ir.attachment'].search([('name', '=', '{} Shiprocket {}' .format(name, picking.name))])
             if not attachment:
-                self.env['ir.attachment'].create({
-                    'name': '%s Shiprocket %s' % (name, picking.name),
+                attachment = self.env['ir.attachment'].create({
+                    'name': '{} Shiprocket {}' .format(name, picking.name),
                     'res_model': 'stock.picking',
                     'res_id': picking.id,
                     'res_name': picking.name,
                     'datas': base64.b64encode(response.content),
                     'mimetype': 'application/pdf'
                 })
+                return attachment
 
 
     def shiprocket_get_tracking_link(self, picking):
-        """ Returns the tracking links from a picking. Shiprocket returns one
+        """
+        Returns the tracking links from a picking. Shiprocket returns one
         tracking link by package.
         """
         print("shiprocket_get_tracking_link---------------------",picking)
@@ -227,7 +225,8 @@ class DeliverCarrier(models.Model):
         return track_url
 
     def shiprocket_cancel_shipment(self, picking):
-        """ Cancel shipment from shiprocket requests.
+        """
+        Cancel shipment from shiprocket requests.
         """
         sr = ShipRocket(self.sudo().shiprocket_access_token, self)
         cancel_shipment = sr.send_cancelling(picking)
