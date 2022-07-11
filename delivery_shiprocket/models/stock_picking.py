@@ -13,7 +13,6 @@ class StockPicking(models.Model):
     shiprocket_shipment_id = fields.Char('Shiprocket Shipment')
     shiprocket_status = fields.Char('Shiprocket Status')
     shipment_courier = fields.Char('Shiprocket Courier')
-    # shipment_courier_id = fields.Many2one('shiprocket.carrier.service', string='Shiprocket Courier')
 
     def action_pickup_requests(self):
         """

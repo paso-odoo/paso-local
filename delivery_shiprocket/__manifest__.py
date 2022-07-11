@@ -12,6 +12,7 @@
         'security/ir.model.access.csv',
         'data/data.xml',
         'data/ir_cron.xml',
+        'views/res_config_settings_views.xml',
         'views/delivery_carrier_views.xml',
         'views/stock_picking.xml',
         'wizard/channel_view.xml',
