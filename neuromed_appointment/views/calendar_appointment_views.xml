@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="calendar_appointment_type_view_form_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">calendar.appointment.type.form.inherit.neuromed_appointment</field>
+        <field name="model">calendar.appointment.type</field>
+        <field name="inherit_id" ref="appointment.calendar_appointment_type_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button class="oe_highlight" string="Generate Slot" type="action" name="%(neuromed_appointment.action_slot_config)d"/>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <header attrs="{'invisible':[('website_published', '=', True)]}">
+                    <button class="oe_highlight" string="Generate Slot" type="action" name="%(neuromed_appointment.action_slot_config)d"/>
+                </header>
+            </xpath>
+            <xpath expr="//field[@name='assign_method']" position="after">
+                <field name="is_accepting_reservation" required="1"/>
+                <field name="website_published" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='weekday']" position="after">
+                <field name="resource_id" required="1"/>
+                <field name="product_id" required="1"/>
+                <field name="location_id" required="1"/>
+                <field name="neuromed_duration" required="1" widget="float_time"/>
+                <field name="date_from" required="1"/>
+                <field name="date_to" required="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

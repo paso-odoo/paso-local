@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="custom_view_account_analytic_line_tree" model="ir.ui.view">
+            <field name="name">account.analytic.line.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="arch" type="xml">
+                <tree string="Analytic Entries">
+                    <field name="date" optional="show"/>
+                    <field name="name"/>
+                    <field name="account_id"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="unit_amount" sum="Quantity" />
+                    <field name="product_uom_id" />
+                    <field name="partner_id" />
+                    <field name="company_id" groups="base.group_multi_company" />
+                    <field name="amount" sum="Total" optional="show"/>
+                    <field name="invoice_type" sum="Total" optional="show"/>
+                    <field name="commission_amount" sum="Total" optional="show"/>
+                    <field name="tag_ids" optional="hide" widget="many2many_tags"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="custom_account_analytic_line_action_entries">
+            <field name="name">Analytic Items</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_mode">tree,kanban,form,graph,pivot</field>
+            <field name="view_id" ref="v15_analytic_items.custom_view_account_analytic_line_tree"/>
+            <field name="search_view_id" ref="analytic.view_account_analytic_line_filter"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    No activity yet
+                </p>
+                <p>
+                    In Odoo, sales orders and projects are implemented using
+                    analytic accounts. You can track costs and revenues to analyse
+                    your margins easily.
+                </p>
+                <p>
+                    Costs will be created automatically when you register supplier
+                    invoices, expenses or timesheets.
+                </p>
+                <p>
+                    Revenues will be created automatically when you create customer
+                    invoices. Customer invoices can be created based on sales orders
+                    (fixed price invoices), on timesheets (based on the work done) or
+                    on expenses (e.g. reinvoicing of travel costs).
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="analytic_product_configuration_menu" name="Analytic Product Configuration"
+                  action="v15_analytic_items.analytic_product_configuration_action"
+                  parent="account.menu_finance_configuration"
+                  sequence="35"/>
+        <menuitem id="account.menu_action_analytic_lines_tree" name="Analytic Items Report"
+                  action="v15_analytic_items.custom_account_analytic_line_action_entries"
+                  parent="account.menu_finance_reports"
+                  sequence="36"/>
+    </data>
+</odoo>

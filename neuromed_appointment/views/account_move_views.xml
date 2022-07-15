@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_inherit_form_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.neuromed_appointment</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="invoice_type" attrs="{'invisible': [('move_type', 'not in', ('out_invoice'))]}" />
+                <field name="invoice_sub_type" attrs="{'invisible': [('move_type', 'not in', ('out_invoice'))]}" />
+                <field name="resource_id" attrs="{'invisible': [('move_type', 'not in', ('out_invoice'))]}" />
+                <field name="branch_location_id" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_slot_config" model="ir.ui.view">
+        <field name="name">slot.config.wizard.form</field>
+        <field name="model">slot.config.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Slot Generation Wizard">
+                <group>
+                    <field name="resource_id" required="1"/>
+                    <field name="product_id" required="1"/>
+                    <field name="location_id" required="1"/>
+                </group>
+                <group string="Select Dates and Duration">
+                    <group>
+                        <field name="date_from" required="1"/>
+                        <field name="date_to" required="1"/>
+                    </group>
+                    <group>
+                        <field name="duration" required="1" widget="float_time"/>
+                        <field name="break_time" widget="float_time"/>
+                    </group>
+                    <group>
+                        <field name="start_hour" required="1" widget="float_time"/>
+                        <field name="end_hour" required="1" widget="float_time"/>
+                        <field name="limit_per_day" required="1"/>
+                    </group>
+                </group>
+                <group string="Select Days">
+                    <group col="8">
+                        <field name="monday"/>
+                        <field name="tuesday"/>
+                        <field name="wednesday"/>
+                        <field name="thursday"/>
+                        <field name="friday"/>
+                        <field name="saturday"/>
+                        <field name="sunday"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="generate_slots" string="Generate Slots" type="object" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_slot_config" model="ir.actions.act_window">
+        <field name="name">Slot Generation Wizard</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">slot.config.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

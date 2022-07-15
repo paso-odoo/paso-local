@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_account_payment_register_form_neuromed_partial" model="ir.ui.view">
+            <field name="name">account.payment.register.neuromed.partial</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_bank_id']" position="after">
+                    <label for="percentage"/>
+                    <div>
+                        <field name="percentage" class="oe_inline"/>
+                        <span class="o_form_label oe_inline">%</span>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_inherit_form_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.neuromed_appointment</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="invoice_type"/>
+                <field name="invoice_sub_type"/>
+                <field name="resource_id"/>
+                <field name="branch_location_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

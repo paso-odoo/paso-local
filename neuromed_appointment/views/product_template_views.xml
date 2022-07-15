@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_form_view_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">product.template.form.inherit.neuromed_appointment</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='detailed_type']" position="after">
+                <field name="duration_of_service" widget="float_time"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Action view -->
+    <record id="action_appointment_service" model="ir.actions.act_window">
+        <field name="name">Services</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="calender_appointment_slot_tree" model="ir.ui.view">
+            <field name="name">calendar.appointment.slot</field>
+            <field name="model">calendar.appointment.slot</field>
+            <field name="arch" type="xml">
+                <tree create="1" editable="top" multi_edit="1">
+                    <field name="create_date"/>
+                    <field name="create_uid"/>
+                    <field name="appointment_type_id"/>
+                    <field name="weekday"/>
+                    <field name="product_id"/>
+                    <field name="resource_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="neuromed_duration" widget="float_time"/>
+                    <field name="start_hour" widget="float_time"/>
+                    <field name="end_hour" widget="float_time"/>
+                    <field name="location_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="calender_appointment_slot_action" model="ir.actions.act_window">
+            <field name="name">Time Slot</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">calendar.appointment.slot</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- This Menu Item must have a parent and an action -->
+        <menuitem id="calender_appointment_slot_menu" name="Time Slot"
+                  parent="appointment.menu_schedule_report"
+                  action="calender_appointment_slot_action"
+                  sequence="11"/>
+    </data>
+</odoo>

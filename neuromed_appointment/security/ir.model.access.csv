@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_medical_resource_types,medical.resource.types,model_medical_resource_types,base.group_system,1,1,1,1
+access_medical_resource_exclude_dates,medical.resource.exclude.dates,model_medical_resource_exclude_dates,base.group_system,1,1,1,1
+access_medical_resources,medical.resources,model_medical_resources,base.group_system,1,1,1,1
+access_medical_location_exclude_dates,medical.location.exclude.dates,model_medical_location_exclude_dates,base.group_system,1,1,1,1
+access_medical_locations,medical.locations,model_medical_locations,base.group_system,1,1,1,1
+access_nueromed_appointment_type,nueromed.appointment.type,model_nueromed_appointment_type,base.group_system,1,1,1,1
+access_slot_config_wizard,nueromed.slot.config.wizard,model_slot_config_wizard,base.group_system,1,1,1,1
+access_calendar_event_stages,nueromed.calendar.event.type.stages,model_neuromed_calendar_event_stages,base.group_system,1,1,1,1

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="appointment_info_inherit" inherit_id="appointment.appointment_info">
+        <xpath expr="//div[hasclass('o_calendar_intro')]" position="after">
+            <div class="d-none">
+                <input type="text" name="service_id" t-att-value="service_id" id="service_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="resource_id" t-att-value="resource_id" id="resource_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="location_id" t-att-value="location_id" id="location_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="crm_id" t-att-value="crm_id" id="crm_id" class="form-control form-control-sm" readonly="readonly"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[hasclass('o_not_editable')]" position="replace">
+            <div t-if="appointment_type.category != 'custom'" class="d-lg-flex col pl-0 mb-2 o_not_editable">
+                <div t-if="neuromed_duration" class="col-md-6 pl-0">
+                    <strong class="mr-2">Duration:</strong>
+                    <span t-out="neuromed_duration" t-options="{'widget': 'float_time'}"/>
+                    hour<t t-if="neuromed_duration>=2">s</t>
+                </div>
+                <div t-if="location_name" class="col-md-6 pl-0">
+                    <strong class="mr-2">Location:</strong>
+                    <span t-out="location_name"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="index_inherit_neuromed_appointment" inherit_id="appointment.appointment_type_select">
+        <xpath expr="//div[@id='appointment_type_select']" position="after">
+            <t t-if="crm_id">
+                <input type="text" id="crm_id" name="crm_id" t-att-value="crm_id" class="d-none"/>
+            </t>
+
+            <div class="form-group row col">
+                <label for="services" class="col-form-label">Services</label>
+                <div class="col-lg-9 col-md-7 ml-auto pl-0">
+                    <select class="form-control" id="services" name="service_id">
+                        <option value="">Select...</option>
+                        <t t-foreach="suggested_services" t-as="service">
+                            <option t-att-value="service[0]"
+                                    t-att-selected="service[0] == selected_product_id and 'selected'">
+                                <t t-esc="service[1]"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row col">
+                <label for="resource" class="col-form-label">Resources</label>
+                <div class="col-lg-9 col-md-7 ml-auto pl-0">
+                    <select class="form-control" id="resource" name="resource_id">
+                        <option value="">Select...</option>
+                        <t t-foreach="suggested_resources" t-as="res">
+                            <option t-att-value="res[0]"
+                                    t-att-selected="res[0] == selected_resource_id and 'selected'">
+                                <t t-esc="res[1]"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row col">
+                <label for="locations" class="col-form-label">Location</label>
+                <div class="col-lg-9 col-md-7 ml-auto pl-0">
+                    <select class="form-control" id="locations" name="location_id">
+                        <option value="">Select...</option>
+                        <t t-foreach="suggested_locations" t-as="loc">
+                            <option t-att-value="loc[0]"
+                                    t-att-selected="loc[0] == selected_location_id and 'selected'">
+                                <t t-esc="loc[1]"/>
+                            </option>
+                        </t>
+                    </select>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="appointment_form_inherit_neuromed_appointment" inherit_id="appointment.appointment_form">
+        <xpath expr="//input[@name='name']" position="after">
+            <div class="d-none">
+                <input type="text" name="service_id" t-att-value="service_id" id="service_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="resource_id" t-att-value="resource_id" id="resource_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="location_id" t-att-value="location_id" id="location_id" class="form-control form-control-sm" readonly="readonly"/>
+                <input type="text" name="crm_id" t-att-value="crm_id" id="crm_id" class="form-control form-control-sm" readonly="readonly"/>
+            </div>
+        </xpath>
+
+        <xpath expr="//input[@name='email']" position="replace">
+            <t t-if="crm_id">
+                <input type="email" class="form-control" name="email" t-att-value="'email' in partner_data and partner_data['email']"/>
+            </t>
+            <t t-else="">
+                <input type="email" class="form-control" name="email" t-att-value="'email' in partner_data and partner_data['email']" required="1"/>
+            </t>
+        </xpath>
+
+        <xpath expr="//input[@name='phone']" position="replace">
+            <t t-if="crm_id">
+                <input type="tel" class="form-control" name="phone" placeholder="+1 (650) 691-3277" id="phone_field" t-att-value="'mobile' in partner_data and partner_data['mobile']"/>
+            </t>
+            <t t-else="">
+                <input type="tel" class="form-control" name="phone" placeholder="+1 (650) 691-3277" required="1" id="phone_field" t-att-value="'mobile' in partner_data and partner_data['mobile']"/>
+            </t>
+        </xpath>
+
+        <xpath expr="//input[@name='employee_id']" position="after">
+            <t t-if="crm_id">
+                <input type="char" class="form-control" name="crm_id" required="1"
+                       t-att-value="crm_id" style="display:none;"/>
+            </t>
+            <t t-if="duration">
+                <input type="char" class="form-control" name="duration" required="1"
+                       t-att-value="duration" style="display:none;"/>
+            </t>
+            <t t-if="resource_id">
+                <div class="form-group row col-xl-8 mx-auto">
+                    <label for="resource" class="col-md-4 col-form-label">Resource</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="resource" required="1"
+                               t-att-value="resource_name" disabled="true"/>
+                    </div>
+                </div>
+                <div class="form-group row col-xl-8 mx-auto" style="display:none;">
+                    <label for="resource_id" class="col-md-4 col-form-label">Resource id</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="resource_id" required="1"
+                               t-att-value="resource_id"/>
+                    </div>
+                </div>
+            </t>
+            <t t-if="location_id">
+                <div class="form-group row col-xl-8 mx-auto">
+                    <label for="location" class="col-md-4 col-form-label">Location</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="location" required="1"
+                               t-att-value="location_name" disabled="true"/>
+                    </div>
+                </div>
+                <div class="form-group row col-xl-8 mx-auto" style="display:none;">
+                    <label for="location_id" class="col-md-4 col-form-label">location id</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="location_id" required="1"
+                               t-att-value="location_id" style="display:none;"/>
+                    </div>
+                </div>
+            </t>
+            <t t-if="service_id">
+                <div class="form-group row col-xl-8 mx-auto">
+                    <label for="product" class="col-md-4 col-form-label">Service</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="product" required="1"
+                               t-att-value="service_name" disabled="true"/>
+                    </div>
+                </div>
+                <div class="form-group row col-xl-8 mx-auto" style="display:none;">
+                    <label for="product_id" class="col-md-4 col-form-label">product id</label>
+                    <div class="col-md-8">
+                        <input type="char" class="form-control" name="product_id" required="1"
+                               t-att-value="service_id" style="display:none;"/>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+    <template inherit_id="appointment.appointment_validated"
+              id="appointment_validated_inherit_neuromed_appointment">
+        <xpath expr="//div[@t-if='event.location']" position="before">
+            <div t-if="event.resource_id" class="col-lg-6 row">
+                <div class="col-4">
+                    <label>Resource:</label>
+                </div>
+                <div class="col-7 mx-md-0">
+                    <div t-field="event.resource_id"/>
+                </div>
+            </div>
+            <div t-if="event.location_id" class="col-lg-6 row">
+                <div class="col-4">
+                    <label>Appointment Location:</label>
+                </div>
+                <div class="col-7 mx-md-0">
+                    <div t-field="event.location_id"/>
+                </div>
+            </div>
+            <div t-if="event.service_id" class="col-lg-6 row">
+                <div class="col-4">
+                    <label>Service:</label>
+                </div>
+                <div class="col-7 mx-md-0">
+                    <div t-field="event.service_id"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

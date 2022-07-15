@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_calendar_event_form_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">calendar.event.form.inherit.neuromed_appointment</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_form"/>
+        <field name="arch" type="xml">
+        	 <xpath expr="//form" position="attributes">
+                <attribute name="edit">0</attribute>
+            </xpath>
+            <xpath expr="//form[1]/div[1]" position="before">
+                <header>
+                    <button name="action_sale_quotations_new" string="Quotation" type="object" class="oe_highlight" attrs="{'invisible': ['|', '|', ('is_quotation', '=', False), ('active', '=', False), ('quotation_count', '>', 0)]}"/>
+                    <field name="is_quotation" invisible="1"/>
+                    <!-- error on click -->
+                    <field name="stage_id" options="{'clickable': '1'}" widget="statusbar"/>
+                </header>
+            </xpath>
+            <xpath expr="//field[@name='allday']" position="after">
+                <field name="resource_id"/>
+                <field name="location_id"/>
+                <field name="service_id"/>
+                <field name="lead_id" />
+            </xpath>
+            <button name="action_open_calendar_event" position="after">
+                <button class="oe_stat_button" type="object" name="action_view_sale_quotation" icon="fa-pencil-square-o">
+                    <field name="quotation_count" widget="statinfo" string="Quotations"/>
+                </button>
+            </button>
+        </field>
+    </record>
+
+    <record id="view_calendar_event_tree_inherit_nuromed_appointment" model="ir.ui.view">
+        <field name="name">calendar.event.tree.inherit.neuromed_appointment</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_ids']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='location']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='stop']" position="after">
+                <field name="lead_id" string="Patient"/>
+                <field name="attendee_status"/>
+                <field name="resource_id"/>
+                <field name="location_id"/>
+            </xpath>
+            <xpath expr="//field[@name='duration']" position="after">
+                <field name="is_quotation" invisible="1"/>
+                <button class="oe_highlight" type="object" name="action_cancel_reschedule" string="Reschedule" attrs="{'invisible': [('is_quotation', '=', True)]}">
+                    <field name="quotation_count" widget="statinfo" string="Quotations"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

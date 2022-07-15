@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="calendar.calendar_menu_config" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [])]"/>
+    </record>
+    <menuitem id="main_medical_resources_menu" name="Resources" parent="calendar.calendar_menu_config" sequence="20" groups="base.group_user"/>
+    <menuitem id="medical_ressources_menu" name="Resources" parent="neuromed_appointment.main_medical_resources_menu" action="action_medical_ressources"/>
+    <menuitem id="medical_ressource_type_menu" name="Resource Types" parent="neuromed_appointment.main_medical_resources_menu" action="action_medical_resource_type"/>
+    <menuitem id="medical_services_menu" name="Services" parent="calendar.calendar_menu_config" action="action_appointment_service" sequence="21"/>
+    <menuitem id="medical_locations_menu" name="Locations" parent="calendar.calendar_menu_config" action="action_medical_locations" sequence="22"/>
+    <menuitem id="medical_appointment_types_menu" name="Appointment Types" parent="calendar.calendar_menu_config" action="action_medical_appointment_type" sequence="23"/>
+    <menuitem id="medical_calendar_event_stages" name="Calendar Event Stages" parent="calendar.calendar_menu_config" action="action_neuromed_calendar_event_stages" sequence="24"/>
+</odoo>
